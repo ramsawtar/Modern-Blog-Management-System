@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Post | Blog Editor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&family=Source+Code+Pro:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-light: #6c8eff;
+            --secondary-color: #3a0ca3;
+            --accent-color: #4cc9f0;
+            --edit-color: #ff9e00;
+            --edit-light: #ffb74d;
+            --warning-color: #ff9800;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --gray-color: #6c757d;
+            --card-shadow: 0 15px 35px rgba(50, 50, 93, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
+            --transition-slow: 0.5s ease;
+            --transition-fast: 0.3s ease;
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fff9e6 0%, #fff0cc 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            overflow-x: hidden;
+        }
+
+        /* Background animation */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation div {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 158, 0, 0.05);
+            animation: float 15s infinite linear;
+        }
+
+        .bg-animation div:nth-child(1) {
+            width: 100px;
+            height: 100px;
+            top: 15%;
+            left: 15%;
+            animation-delay: 0s;
+            animation-duration: 18s;
+        }
+
+        .bg-animation div:nth-child(2) {
+            width: 150px;
+            height: 150px;
+            top: 65%;
+            right: 10%;
+            animation-delay: -3s;
+            animation-duration: 22s;
+        }
+
+        .bg-animation div:nth-child(3) {
+            width: 70px;
+            height: 70px;
+            bottom: 20%;
+            left: 25%;
+            animation-delay: -6s;
+            animation-duration: 16s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(720deg);
+                opacity: 0.5;
+            }
+        }
+
+        .container {
+            max-width: 900px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header styling */
+        .page-header {
+            text-align: center;
+            margin: 3rem 0 2.5rem;
+            position: relative;
+        }
+
+        .page-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 2.8rem;
+            color: var(--edit-color);
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            position: relative;
+            text-shadow: 0 2px 5px rgba(255, 158, 0, 0.1);
+        }
+
+        .page-header h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 4px;
+            background: linear-gradient(to right, var(--edit-color), #ff6b00);
+            border-radius: 2px;
+            animation: expandLine 1s ease-out 0.5s both;
+        }
+
+        @keyframes expandLine {
+            from { width: 0; }
+            to { width: 120px; }
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            color: #8a6d3b;
+            max-width: 600px;
+            margin: 1.5rem auto 0;
+            line-height: 1.6;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid var(--edit-color);
+        }
+
+        /* Post info card */
+        .post-info-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border-left: 5px solid var(--edit-color);
+            animation: slideInLeft 0.6s ease-out 0.3s both;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-label {
+            font-size: 0.85rem;
+            color: var(--gray-color);
+            font-weight: 500;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+        }
+
+        .post-id {
+            background: linear-gradient(to right, var(--edit-color), #ff6b00);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(255, 158, 0, 0.2);
+        }
+
+        /* Form card styling */
+        .form-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            box-shadow: var(--card-shadow);
+            border: none;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            animation: cardAppear 0.8s ease-out 0.5s both;
+        }
+
+        .form-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(50, 50, 93, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--edit-color), #ff6b00);
+        }
+
+        /* Form group styling */
+        .form-group {
+            margin-bottom: 1.8rem;
+            position: relative;
+            animation: fadeIn 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.7s; }
+        .form-group:nth-child(2) { animation-delay: 0.9s; }
+        .form-group:nth-child(3) { animation-delay: 1.1s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 0.7rem;
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+            transition: color var(--transition-fast);
+        }
+
+        .form-label i {
+            margin-right: 10px;
+            color: var(--edit-color);
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Form control styling */
+        .form-control {
+            border: 2px solid #ffe0b2;
+            border-radius: 10px;
+            padding: 1rem 1.2rem;
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            font-family: 'Poppins', sans-serif;
+            background-color: #fffcf5;
+        }
+
+        .form-control:focus {
+            border-color: var(--edit-light);
+            box-shadow: 0 0 0 0.25rem rgba(255, 158, 0, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+            background-color: white;
+        }
+
+        .form-control:hover {
+            border-color: #ffcc80;
+        }
+
+        textarea.form-control {
+            min-height: 200px;
+            resize: vertical;
+            line-height: 1.6;
+            font-family: 'Source Code Pro', monospace;
+        }
+
+        /* Character counter */
+        .char-counter {
+            text-align: right;
+            font-size: 0.85rem;
+            color: var(--gray-color);
+            margin-top: 0.5rem;
+            opacity: 0;
+            transition: opacity var(--transition-fast);
+        }
+
+        .char-counter.show {
+            opacity: 1;
+        }
+
+        /* Button styling */
+        .btn {
+            padding: 0.8rem 1.8rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        .btn:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, #6c757d, #5a6268);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 18px rgba(108, 117, 125, 0.3);
+            background: linear-gradient(to right, #5a6268, #495057);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--edit-color), #ff6b00);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 158, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 158, 0, 0.4);
+            background: linear-gradient(to right, #ff6b00, #e65100);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            transform: none !important;
+            box-shadow: 0 4px 12px rgba(255, 158, 0, 0.2) !important;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+            animation: fadeIn 0.6s ease-out 1.3s both;
+        }
+
+        /* Changes indicator */
+        .changes-indicator {
+            background: rgba(255, 158, 0, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-left: 4px solid var(--edit-color);
+            animation: fadeIn 0.6s ease-out 1.3s both;
+            display: none;
+        }
+
+        .changes-indicator.show {
+            display: block;
+        }
+
+        .changes-title {
+            font-weight: 600;
+            color: var(--edit-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .change-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        .change-item i {
+            color: var(--edit-color);
+            font-size: 0.8rem;
+        }
+
+        /* Form validation styling */
+        .is-valid {
+            border-color: var(--success-color) !important;
+            background-color: rgba(46, 204, 113, 0.05) !important;
+        }
+
+        .is-invalid {
+            border-color: var(--danger-color) !important;
+            background-color: rgba(231, 76, 60, 0.05) !important;
+        }
+
+        .valid-feedback, .invalid-feedback {
+            display: block;
+            margin-top: 0.4rem;
+            font-size: 0.85rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .valid-feedback {
+            color: var(--success-color);
+        }
+
+        .invalid-feedback {
+            color: var(--danger-color);
+        }
+
+        /* Tooltip */
+        .tooltip-icon {
+            color: var(--gray-color);
+            margin-left: 8px;
+            font-size: 0.9rem;
+            cursor: help;
+            position: relative;
+        }
+
+        .tooltip-icon:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark-color);
+            color: white;
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .page-header h1 {
+                font-size: 2.2rem;
+            }
+
+            .form-card {
+                padding: 1.8rem;
+            }
+
+            .post-info-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .button-group {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Loading animation */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Success message */
+        .success-message {
+            background: linear-gradient(135deg, var(--edit-color), #ff6b00);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin-top: 2rem;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+            box-shadow: 0 10px 25px rgba(255, 158, 0, 0.3);
+        }
+
+        .success-message i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+            animation: bounce 1s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Pencil edit animation */
+        .edit-icon {
+            display: inline-block;
+            animation: pencilEdit 2s ease-in-out infinite;
+        }
+
+        @keyframes pencilEdit {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(15deg); }
+            75% { transform: rotate(-15deg); }
+        }
+    </style>
+</head>
+<body>
+<!-- Background animation -->
+<div class="bg-animation">
+    <div></div>
+    <div></div>
+    <div></div>
+</div>
+
+<div class="container">
+    <!-- Page header -->
+    <div class="page-header">
+        <h1><span class="edit-icon"><i class="fas fa-edit"></i></span> Edit Post</h1>
+        <p>Make changes to your blog post. All modifications will be saved when you click "Update Post".</p>
+    </div>
+
+    <!-- Post info card -->
+    <div class="post-info-card">
+        <div class="post-meta">
+            <div class="meta-item">
+                <span class="meta-label">Post ID</span>
+                <span class="meta-value" id="postIdDisplay">#<span th:text="${post.id}">123</span></span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Last Updated</span>
+                <span class="meta-value">Just now</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Status</span>
+                <span class="meta-value" style="color: var(--edit-color);">Editing</span>
+            </div>
+        </div>
+        <div class="post-id">
+            <i class="fas fa-hashtag me-1"></i> <span th:text="${post.id}">123</span>
+        </div>
+    </div>
+
+    <!-- Form card -->
+    <form th:action="@{/update}" th:object="${post}" method="post" class="form-card" id="editForm">
+        <!-- Hidden ID field for editing -->
+        <input type="hidden" th:field="*{id}" id="postId" />
+
+        <!-- Title field -->
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-heading"></i> Post Title
+                <span class="tooltip-icon" data-tooltip="Update the title of your blog post">
+                        <i class="fas fa-info-circle"></i>
+                    </span>
+            </label>
+            <label for="titleInput"></label><input type="text" th:field="*{title}" class="form-control"
+                                                   placeholder="Update post title"
+                                                   id="titleInput" required
+                                                   minlength="5" maxlength="120">
+            <div class="valid-feedback">Title updated successfully!</div>
+            <div class="invalid-feedback">Please enter a title between 5 and 120 characters.</div>
+            <div class="char-counter" id="titleCounter"><span id="titleLength">0</span>/120</div>
+        </div>
+
+        <!-- Author field -->
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-user-edit"></i> Author Name
+                <span class="tooltip-icon" data-tooltip="Update the author name for this post">
+                        <i class="fas fa-info-circle"></i>
+                    </span>
+            </label>
+            <label for="authorInput"></label><input type="text" th:field="*{author}" class="form-control"
+                                                    placeholder="Update author name"
+                                                    id="authorInput" required
+                                                    minlength="2" maxlength="60">
+            <div class="valid-feedback">Author name updated!</div>
+            <div class="invalid-feedback">Please enter an author name between 2 and 60 characters.</div>
+            <div class="char-counter" id="authorCounter"><span id="authorLength">0</span>/60</div>
+        </div>
+
+        <!-- Content field -->
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-align-left"></i> Post Content
+                <span class="tooltip-icon" data-tooltip="Update the main content of your blog post">
+                        <i class="fas fa-info-circle"></i>
+                    </span>
+            </label>
+            <label for="contentInput"></label><textarea th:field="*{content}" class="form-control"
+                                                        placeholder="Update post content..."
+                                                        id="contentInput" rows="8" required
+                                                        minlength="50" maxlength="5000"></textarea>
+            <div class="valid-feedback">Content updated successfully!</div>
+            <div class="invalid-feedback">Please write at least 50 characters of content (maximum 5000).</div>
+            <div class="char-counter" id="contentCounter"><span id="contentLength">0</span>/5000</div>
+        </div>
+
+        <!-- Changes indicator -->
+        <div class="changes-indicator" id="changesIndicator">
+            <div class="changes-title">
+                <i class="fas fa-exchange-alt"></i> Changes Detected
+            </div>
+            <div id="changesList">
+                <!-- Changes will be listed here dynamically -->
+            </div>
+        </div>
+
+        <!-- Button group -->
+        <div class="button-group">
+            <a href="/" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Posts
+            </a>
+            <div>
+                <button type="button" class="btn btn-outline-warning me-2" id="resetBtn">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="fas fa-save"></i> Update Post
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Success message (hidden by default) -->
+    <div class="success-message" id="successMessage">
+        <i class="fas fa-check-circle"></i>
+        <h3>Post Updated Successfully!</h3>
+        <p>Your changes have been saved. Redirecting you to the posts page...</p>
+    </div>
+
+    <!-- Footer note -->
+    <div class="text-center text-muted small mt-4 mb-5">
+        <p><i class="fas fa-history me-1"></i> Edit history is automatically saved. You can revert changes at any time.</p>
+    </div>
+</div>
+
+<!-- JavaScript for enhanced interactivity -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form elements
+        const form = document.getElementById('editForm');
+        const titleInput = document.getElementById('titleInput');
+        const authorInput = document.getElementById('authorInput');
+        const contentInput = document.getElementById('contentInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const successMessage = document.getElementById('successMessage');
+        const changesIndicator = document.getElementById('changesIndicator');
+        const changesList = document.getElementById('changesList');
+        const postId = document.getElementById('postId').value;
+
+        // Character counters
+        const titleCounter = document.getElementById('titleCounter');
+        const authorCounter = document.getElementById('authorCounter');
+        const contentCounter = document.getElementById('contentCounter');
+        const titleLength = document.getElementById('titleLength');
+        const authorLength = document.getElementById('authorLength');
+        const contentLength = document.getElementById('contentLength');
+
+        // Store original values
+        const originalValues = {
+            title: titleInput.value,
+            author: authorInput.value,
+            content: contentInput.value
+        };
+
+        // Track changes
+        let changes = [];
+
+        // Initialize character counters
+        updateCharCounter(titleInput, titleLength, titleCounter, 120);
+        updateCharCounter(authorInput, authorLength, authorCounter, 60);
+        updateCharCounter(contentInput, contentLength, contentCounter, 5000);
+
+        // Check for changes initially
+        checkForChanges();
+
+        // Add event listeners for real-time validation and change detection
+        titleInput.addEventListener('input', function() {
+            validateField(this, 5, 120);
+            updateCharCounter(this, titleLength, titleCounter, 120);
+            checkForChanges();
+        });
+
+        authorInput.addEventListener('input', function() {
+            validateField(this, 2, 60);
+            updateCharCounter(this, authorLength, authorCounter, 60);
+            checkForChanges();
+        });
+
+        contentInput.addEventListener('input', function() {
+            validateField(this, 50, 5000);
+            updateCharCounter(this, contentLength, contentCounter, 5000);
+            checkForChanges();
+        });
+
+        // Focus effect on form inputs
+        const formInputs = document.querySelectorAll('.form-control');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+                this.style.transform = 'translateY(-2px)';
+            });
+
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+                this.style.transform = 'translateY(0)';
+                validateField(this, this.getAttribute('minlength'), this.getAttribute('maxlength'));
+            });
+        });
+
+        // Reset button functionality
+        resetBtn.addEventListener('click', function() {
+            if (confirm("Are you sure you want to reset all changes?")) {
+                titleInput.value = originalValues.title;
+                authorInput.value = originalValues.author;
+                contentInput.value = originalValues.content;
+
+                // Trigger input events to update UI
+                titleInput.dispatchEvent(new Event('input'));
+                authorInput.dispatchEvent(new Event('input'));
+                contentInput.dispatchEvent(new Event('input'));
+
+                // Animate reset
+                resetBtn.innerHTML = '<i class="fas fa-check"></i> Reset Complete';
+                resetBtn.classList.remove('btn-outline-warning');
+                resetBtn.classList.add('btn-success');
+
+                setTimeout(() => {
+                    resetBtn.innerHTML = '<i class="fas fa-undo"></i> Reset';
+                    resetBtn.classList.remove('btn-success');
+                    resetBtn.classList.add('btn-outline-warning');
+                }, 1500);
+            }
+        });
+
+        // Form submission with animation
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Validate all fields
+            const isTitleValid = validateField(titleInput, 5, 120);
+            const isAuthorValid = validateField(authorInput, 2, 60);
+            const isContentValid = validateField(contentInput, 50, 5000);
+
+            if (!isTitleValid || !isAuthorValid || !isContentValid) {
+                // Shake form to indicate error
+                form.style.animation = 'none';
+                setTimeout(() => {
+                    form.style.animation = 'shake 0.5s ease';
+                }, 10);
+
+                // Remove shake animation after it completes
+                setTimeout(() => {
+                    form.style.animation = '';
+                }, 500);
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Saving Changes...';
+
+            // Simulate API call delay
+            setTimeout(() => {
+                // Show success message
+                successMessage.style.display = 'block';
+                form.style.opacity = '0.5';
+                form.style.pointerEvents = 'none';
+
+                // Update original values
+                originalValues.title = titleInput.value;
+                originalValues.author = authorInput.value;
+                originalValues.content = contentInput.value;
+
+                // In a real app, you would submit the form here
+                // For demonstration, we'll simulate a successful update
+                setTimeout(() => {
+                    // Redirect to home page after 2 seconds
+                    window.location.href = "/";
+                }, 2000);
+            }, 1500);
+        });
+
+        // Helper functions
+        function updateCharCounter(input, lengthSpan, counterDiv, maxLength) {
+            const length = input.value.length;
+            lengthSpan.textContent = length;
+
+            // Show counter if there's any content
+            if (length > 0) {
+                counterDiv.classList.add('show');
+            } else {
+                counterDiv.classList.remove('show');
+            }
+
+            // Change color based on length
+            if (length > maxLength * 0.9) {
+                counterDiv.style.color = '#e74c3c';
+            } else if (length > maxLength * 0.7) {
+                counterDiv.style.color = '#f39c12';
+            } else {
+                counterDiv.style.color = '#6c757d';
+            }
+        }
+
+        function validateField(field, min, max) {
+            const value = field.value.trim();
+            const length = value.length;
+
+            // Reset validation classes
+            field.classList.remove('is-valid', 'is-invalid');
+
+            // Check if field is valid
+            if (length === 0) {
+                // Empty field - don't show validation until user tries to submit
+                return false;
+            } else if (length >= min && length <= max) {
+                field.classList.add('is-valid');
+                return true;
+            } else {
+                field.classList.add('is-invalid');
+                return false;
+            }
+        }
+
+        function checkForChanges() {
+            changes = [];
+
+            // Check title changes
+            if (titleInput.value !== originalValues.title) {
+                changes.push({
+                    field: 'Title',
+                    from: originalValues.title.substring(0, 30) + (originalValues.title.length > 30 ? '...' : ''),
+                    to: titleInput.value.substring(0, 30) + (titleInput.value.length > 30 ? '...' : '')
+                });
+            }
+
+            // Check author changes
+            if (authorInput.value !== originalValues.author) {
+                changes.push({
+                    field: 'Author',
+                    from: originalValues.author,
+                    to: authorInput.value
+                });
+            }
+
+            // Check content changes
+            if (contentInput.value !== originalValues.content) {
+                const originalWords = originalValues.content.split(/\s+/).length;
+                const newWords = contentInput.value.split(/\s+/).length;
+                const wordDiff = newWords - originalWords;
+
+                changes.push({
+                    field: 'Content',
+                    from: `${originalWords} words`,
+                    to: `${newWords} words ${wordDiff >= 0 ? `(+${wordDiff})` : `(${wordDiff})`}`
+                });
+            }
+
+            // Update changes indicator
+            if (changes.length > 0) {
+                changesIndicator.classList.add('show');
+
+                let changesHTML = '';
+                changes.forEach(change => {
+                    changesHTML += `
+                            <div class="change-item">
+                                <i class="fas fa-arrow-right"></i>
+                                <span><strong>${change.field}:</strong> ${change.from} → ${change.to}</span>
+                            </div>
+                        `;
+                });
+
+                changesList.innerHTML = changesHTML;
+            } else {
+                changesIndicator.classList.remove('show');
+            }
+        }
+
+        // Add shake animation for form
+        const style = document.createElement('style');
+        style.textContent = `
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                    20%, 40%, 60%, 80% { transform: translateX(5px); }
+                }
+            `;
+        document.head.appendChild(style);
+
+        // Focus on first input
+        titleInput.focus();
+
+        // Simulate initial field validation
+        setTimeout(() => {
+            validateField(titleInput, 5, 120);
+            validateField(authorInput, 2, 60);
+            validateField(contentInput, 50, 5000);
+        }, 500);
+    });
+</script>
+</body>
+</html>
